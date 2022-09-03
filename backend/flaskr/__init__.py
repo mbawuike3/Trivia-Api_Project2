@@ -27,7 +27,7 @@ def paginate_questions(request, selection):
     return current_questions
 
 def create_app(test_config=None):
-    # create and configure the app
+
     app = Flask(__name__)
     setup_db(app)
     CORS(app)
@@ -60,7 +60,6 @@ def create_app(test_config=None):
     """
     @app.route('/categories')
     def get_categories():
-    # http://127.0.0.1:5000/categories
 
         categories = db.session.query(Category).order_by(Category.id).all()
     
@@ -69,7 +68,7 @@ def create_app(test_config=None):
 
         return jsonify ({
             'success': True,
-            'categories': {item.id: item.type for item in categories}
+            'categories': {category.id: category.type for category in categories}
         })
         
 
@@ -87,17 +86,13 @@ def create_app(test_config=None):
     """
     @app.route('/questions')
     def get_questions():
-    # http://127.0.0.1:5000/questions?page=2
-
-        # selection = db.session.query(Question).order_by(Question.id)
+   
         selection = db.session.query(Question).options(load_only
         (Question.question, Question.category)).order_by(Question.id)
-        # selection = Question.query.with_entities(Question.question, Question.category)
-        # selection = Question.query.options(load_only(Question.category)).all()
-        # selection = db.session.query(Question.question, Question.category)
+       
         categories = Category.query.all()
         question = Question.query.all()
-        # return selection
+      
         questions = paginate_questions(request, selection)
 
         if len(questions) == 0:
@@ -108,7 +103,7 @@ def create_app(test_config=None):
                 "questions": list(questions),
                 "total_questions": len(question),
                 "current_category": 'sten',
-                "total_categories": {item.id: item.type for item in categories}
+                "total_categories": {category.id: category.type for category in categories}
             })
 
     """
@@ -122,20 +117,20 @@ def create_app(test_config=None):
     def delete_question(question_id):
         try:
             question = Question.query.get(question_id)
-            # del_question = Question.query(Question.question).filter(Question.id == question_id)
+          
             
             if question is None:
                 abort(404)
             
             question.delete()
 
-            tot_question = len(Question.query.all())
+            total_question = len(Question.query.all())
 
             return jsonify({
                 'success': True,
                 'deleted': question_id,
-                # 'question_deleted': del_question,
-                'total_questions': tot_question
+        
+                'total_questions': total_question
             })
         except:
             abort(422)
@@ -180,7 +175,7 @@ def create_app(test_config=None):
             'success': True,
             'created': question.id,
             'questions': current_questions,
-            # 'created': question.new_question,
+
             'total_questions': len(tot_questions)
         })
         except:
@@ -197,14 +192,13 @@ def create_app(test_config=None):
     Try using the word "title" to start.
     """
     @app.route('/questions/search')
-    # http://127.0.0.1:5000/questions/search?search=What
+
 
     def search_questions():
         search_term = request.args.get('search')
         selection = Question.query.filter(Question.question.ilike(f'%{search_term}%')).all()
         search_questions = paginate_questions(request, selection)
-        # question = Question.query.all()
-
+       
         if search_term == None:
             abort(404)
 
@@ -224,7 +218,7 @@ def create_app(test_config=None):
     """
     @app.route('/categories/<int:category_id>/questions')
     def category_questions(category_id):
-    # http://127.0.0.1:5000/category/2/questions
+  
 
         try:
             selection = Question.query.filter(category_id == Question.category).all()
@@ -239,7 +233,7 @@ def create_app(test_config=None):
                     "success": True,
                     "questions": list(current_questions),
                     "total_questions": len(selection),
-                    # "current_category": [my_str.join(cat.type) if cat.id == category_id else 'x' for cat in categories]
+                    
                     "current_category": [cat.type for cat in categories if cat.id == category_id ]
                 })
         except:
