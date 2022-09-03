@@ -29,7 +29,6 @@ The [backend](./backend/README.md) directory contains a partially completed Flas
 1. `backend/flaskr/__init__.py`
 2. `backend/test_flaskr.py`
 
-> View the [Backend README](./backend/README.md) for more details.
 
 ### Frontend
 
@@ -46,4 +45,4 @@ Pay special attention to what data the frontend is expecting from each API respo
 
 By making notes ahead of time, you will practice the core skill of being able to read and understand code and will have a simple plan to follow to build out the endpoints of your backend API.
 
-> View the [Frontend README](./frontend/README.md) for more details.
+
