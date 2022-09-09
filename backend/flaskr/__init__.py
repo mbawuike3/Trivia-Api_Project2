@@ -1,4 +1,5 @@
 
+from crypt import methods
 from json import load
 import os
 import string
@@ -34,11 +35,11 @@ def create_app(test_config=None):
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
     """
-    @TODO[DONE]: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
+    @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
     """
 
     """
-    @TODO[DONE]: Use the after_request decorator to set Access-Control-Allow
+    @TODO: Use the after_request decorator to set Access-Control-Allow
     """
     @app.after_request
     def after_request(response):
@@ -58,19 +59,18 @@ def create_app(test_config=None):
     Create an endpoint to handle GET requests
     for all available categories.
     """
-    @app.route('/categories')
-    def get_categories():
+    @app.route("/categories", methods=['GET', 'POST'])
+    def retrives_categories():
+        categories = Category.query.all()
+        categorie = {}
 
-        categories = db.session.query(Category).order_by(Category.id).all()
-    
-        if len(categories) == 0:
-            abort(404)
+        for category in categories:
+            categorie[category.id] = category.type
 
-        return jsonify ({
+        return jsonify({
             'success': True,
-            'categories': {category.id: category.type for category in categories}
+            'categories': categorie
         })
-        
 
     """
     @TODO:
@@ -85,27 +85,22 @@ def create_app(test_config=None):
     Clicking on the page numbers should update the questions.
     """
     @app.route('/questions')
-    def get_questions():
-   
-        selection = db.session.query(Question).options(load_only
-        (Question.question, Question.category)).order_by(Question.id)
-       
-        categories = Category.query.all()
-        question = Question.query.all()
-      
-        questions = paginate_questions(request, selection)
+    def retrieve_all_questions():
+        selection = Question.query.order_by(Question.id).all()
+        current_questions = paginate_questions(request, selection)
 
-        if len(questions) == 0:
+        categories = Category.query.order_by(Category.type).all()
+
+        if len(current_questions) == 0:
             abort(404)
 
         return jsonify({
-                "success": True,
-                "questions": list(questions),
-                "total_questions": len(question),
-                "current_category": 'sten',
-                "total_categories": {category.id: category.type for category in categories}
-            })
-
+            'success': True,
+            'questions': current_questions,
+            'total_questions': len(selection),
+            'categories': {category.id: category.type for category in categories},
+            'current_category': None
+        })
     """
     @TODO:
     Create an endpoint to DELETE question using a question ID.
@@ -150,33 +145,33 @@ def create_app(test_config=None):
 
         body = request.get_json()
 
-        new_question = body.get('question')
-        new_answer = body.get('answer')
-        new_category = body.get('category')
-        new_difficulty = body.get('difficulty')
+        question = body.get('question')
+        answer = body.get('answer')
+        category = body.get('category')
+        difficulty = body.get('difficulty')
 
-        if (body, new_question, new_answer, new_category, new_difficulty) == None:
+        if (body, question, answer, category, difficulty) == None:
             abort(422)
 
         try:
             question = Question(
-                question=new_question,
-                answer=new_answer,
-                category=new_category,
-                difficulty=new_difficulty
+                question=question,
+                answer=answer,
+                category=category,
+                difficulty=difficulty
                 )
 
             question.insert()
 
-            tot_questions = Question.query.all()
-            current_questions = paginate_questions(request, tot_questions)
+            total_questions = Question.query.all()
+            current_questions = paginate_questions(request, total_questions)
 
             return jsonify({
             'success': True,
             'created': question.id,
             'questions': current_questions,
 
-            'total_questions': len(tot_questions)
+            'total_questions': len(total_questions)
         })
         except:
             abort(422)
@@ -191,22 +186,22 @@ def create_app(test_config=None):
     only question that include that string within their question.
     Try using the word "title" to start.
     """
-    @app.route('/questions/search')
+    @app.route("/questions/search", methods=['POST'])
+    def search():
+        body = request.get_json()
+        search = body.get('searchTerm')
+        questions = Question.query.filter(
+            Question.question.ilike('%'+search+'%')).all()
 
-
-    def search_questions():
-        search_term = request.args.get('search')
-        selection = Question.query.filter(Question.question.ilike(f'%{search_term}%')).all()
-        search_questions = paginate_questions(request, selection)
-       
-        if search_term == None:
-            abort(404)
-
-        return jsonify({
-                "success": True,
-                "questions": list(search_questions),
-                "total_questions": len(selection),
+        if questions:
+            currentQuestions = paginate_questions(request, questions)
+            return jsonify({
+                'success': True,
+                'questions': currentQuestions,
+                'total_questions': len(questions)
             })
+        else:
+            abort(404)
 
     """
     @TODO:
